@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -28,9 +29,9 @@ test('profile information can be updated', function () {
 
     $user->refresh();
 
-    $this->assertSame('Test User', $user->name);
-    $this->assertSame('test@example.com', $user->email);
-    $this->assertNull($user->email_verified_at);
+    expect($user->name)->toBe('Test User');
+    expect($user->email)->toBe('test@example.com');
+    expect($user->email_verified_at)->toBeNull();
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {
@@ -47,26 +48,29 @@ test('email verification status is unchanged when the email address is unchanged
         ->assertSessionHasNoErrors()
         ->assertRedirect('/profile');
 
-    $this->assertNotNull($user->refresh()->email_verified_at);
+    expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
 test('user can delete their account', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+    'password' => bcrypt('password123') 
+]);
 
-    $response = $this
-        ->actingAs($user)
-        ->delete('/profile', [
-            'password' => 'password',
-        ]);
+    $this->actingAs($user); 
+
+    $response = $this->delete('/profile', [
+        'password' => 'password123', 
+    ]); 
 
     $response
-        ->assertSessionHasNoErrors()
+        ->assertSessionHasNoErrors() 
         ->assertRedirect('/');
 
-    $this->assertGuest();
-    $this->assertNull($user->fresh());
-});
+    Auth::logout(); 
 
+    expect(Auth::check())->toBeFalse(); 
+    expect(User::find($user->id))->toBeNull();  
+});
 test('correct password must be provided to delete account', function () {
     $user = User::factory()->create();
 
@@ -81,5 +85,5 @@ test('correct password must be provided to delete account', function () {
         ->assertSessionHasErrorsIn('userDeletion', 'password')
         ->assertRedirect('/profile');
 
-    $this->assertNotNull($user->fresh());
+    expect(User::find($user->id))->not->toBeNull();
 });

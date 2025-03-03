@@ -1,26 +1,13 @@
 <?php
 
-use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Middleware\CheckIfIsAdmin;
 use Illuminate\Support\Facades\Route;
-
-Route::middleware('auth')
-    ->prefix('admin')
-    ->group(function () {
-        // Route::resource('/users', UserController::class);
-        Route::delete('/users/{user}/destroy', [UserController::class, 'destroy'])->name('users.destroy')->middleware(CheckIfIsAdmin::class);
-        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
-        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-        Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    });
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 
 Route::get('/', function () {
     return view('welcome');
-})->name('home');
+});
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -32,4 +19,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__ . '/auth.php';
+Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+
+Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+Route::post('/register', [RegisteredUserController::class, 'store']);
+
+
+require __DIR__.'/auth.php';
